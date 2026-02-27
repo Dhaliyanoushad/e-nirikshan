@@ -4,6 +4,7 @@ import About from "./components/About";
 import Problem from "./components/Problem";
 import Capabilities from "./components/Capabilities";
 import Updates from "./components/Updates";
+import Footer from "./components/Footer";
 
 export default function Home() {
   return (
@@ -19,6 +20,8 @@ export default function Home() {
       <Capabilities />
 
       <Updates />
+
+      <Footer />
     </main>
   );
 }
