@@ -1,113 +1,199 @@
 import { supabase } from "@/lib/supabase";
-
 import { verifyProgress } from "@/lib/gemini";
-
 import { getNews } from "@/lib/news";
-
 import { getExpectedPhase } from "@/lib/timeline";
 
+export const runtime = "nodejs";
+
+export async function POST(req) {
+
+try {
+
+// 1. Read form data
+
+const form = await req.formData();
+
+const projectId = form.get("projectId");
+
+const photo = form.get("photo");
 
 
-export async function POST(req){
+if (!projectId || !photo) {
 
-const form=await req.formData();
+return Response.json({
 
-const projectId=form.get("projectId");
+success: false,
 
-const photo=form.get("photo");
+error: "Missing projectId or photo"
+
+}, { status: 400 });
+
+}
 
 
 
-const project=
+// 2. Fetch project
 
-await supabase
+const { data: project, error: projectError } = await supabase
 
 .from("contractor_projects")
 
 .select("*")
 
-.eq("project_id",projectId)
+.eq("project_id", projectId)
 
 .single();
 
 
+if (projectError || !project) {
 
-const filePath=
+return Response.json({
 
-`photos/${projectId}-${Date.now()}.jpg`;
+success: false,
+
+error: "Project not found"
+
+}, { status: 404 });
+
+}
 
 
-await supabase.storage
+
+// 3. Save photo to storage (optional, for record)
+
+const filePath = `photos/${projectId}-${Date.now()}.jpg`;
+
+const { error: uploadError } = await supabase.storage
 
 .from("photos")
 
-.upload(filePath,photo);
+.upload(filePath, photo);
+
+
+if (uploadError) {
+
+console.error(uploadError);
+
+}
 
 
 
-const imageUrl=
+// 4. Convert photo → buffer for Gemini
 
-`${process.env.NEXT_PUBLIC_SUPABASE_URL}
+const imageBuffer = Buffer.from(
 
-/storage/v1/object/public/${filePath}`;
-
-
-
-const news=
-
-await getNews(project.data.location);
-
-
-
-const phase=
-
-getExpectedPhase(
-
-project.data.start_date,
-
-project.data.contractor_report_timeline
+await photo.arrayBuffer()
 
 );
 
 
 
-const gemini=
+// 5. Get news
 
-await verifyProgress(
+const news = await getNews(project.location);
 
-imageUrl,
 
-phase.phase,
 
-JSON.stringify(news)
+// 6. Get expected phase
+
+const phase = getExpectedPhase(
+
+project.start_date,
+
+project.contractor_report_timeline
 
 );
 
 
 
-await supabase
+// 7. Call Gemini with image buffer (NOT URL)
+
+const gemini = await verifyProgress({
+
+imageBuffer,
+
+expectedPhase: phase.phase,
+
+news: news,
+
+projectSummary: project.project_summary
+
+});
+
+
+
+// 8. Update database
+
+const { error: updateError } = await supabase
 
 .from("contractor_projects")
 
 .update({
 
-latest_photo:{
-url:imageUrl,
-analysis:gemini
+latest_photo: {
+
+storage_path: filePath,
+
+analysis: gemini
+
 },
 
-latest_news:news,
+latest_news: news,
 
-gemini_suggestions:{
-suggestion:gemini.suggestion
+gemini_suggestions: {
+
+suggestion: gemini?.suggestion || null,
+
+delayRisk: gemini?.delayRisk || null
+
 }
 
 })
 
-.eq("project_id",projectId);
+.eq("project_id", projectId);
+
+
+if (updateError) {
+
+console.error(updateError);
+
+return Response.json({
+
+success: false,
+
+error: "Database update failed"
+
+}, { status: 500 });
+
+}
 
 
 
-return Response.json({success:true});
+// 9. Return success
+
+return Response.json({
+
+success: true,
+
+analysis: gemini
+
+});
+
+
+}
+
+catch (error) {
+
+console.error("Update project error:", error);
+
+return Response.json({
+
+success: false,
+
+error: error.message
+
+}, { status: 500 });
+
+}
 
 }
