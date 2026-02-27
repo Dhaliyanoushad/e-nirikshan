@@ -7,8 +7,7 @@ import RecentActivity from "./RecentActivity";
 
 export default function DashboardPage() {
   return (
-    <div className="p-6 space-y-8">
-
+    <div className="py-32 px-6 space-y-8">
       <h1 className="text-3xl font-bold">State Monitoring Dashboard</h1>
 
       {/* KPI Section */}
@@ -28,7 +27,6 @@ export default function DashboardPage() {
 
       {/* Activity Feed */}
       <RecentActivity />
-
     </div>
   );
 }

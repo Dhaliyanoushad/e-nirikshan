@@ -37,24 +37,51 @@ const projects = [
 export default function DistrictProjectsPage() {
   const { district } = useParams();
 
+  const getStatus = (status) => {
+    if (status === "delayed") return "bg-red-100 text-red-600";
+
+    if (status === "risk") return "bg-yellow-100 text-yellow-600";
+
+    return "bg-green-100 text-green-600";
+  };
+
+  const getProgressColor = (status) => {
+    if (status === "delayed") return "bg-red-500";
+
+    if (status === "risk") return "bg-yellow-500";
+
+    return "bg-green-500";
+  };
+
   return (
-    <div className="p-8 bg-gray-100 min-h-screen">
-      <h1 className="text-2xl font-semibold mb-8 capitalize">
-        {district} Projects
-      </h1>
+    <div className="min-h-screen bg-[#F5F9FC] px-8 py-12">
+      {/* Header */}
 
-      {/* Grid Layout Like Screenshot */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="max-w-7xl mx-auto mb-12">
+        <p className="text-[#4B8BBE] mb-2">Home / Projects / {district}</p>
 
+        <h1 className="text-4xl font-bold text-[#001F3F] capitalize">
+          {district} Projects
+        </h1>
+
+        <p className="text-gray-600 mt-2">
+          Monitor project progress and status
+        </p>
+      </div>
+
+      {/* Grid */}
+
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {projects.map((project) => (
           <Link
             key={project.id}
             href={`/projects/${district}/${project.id}`}
+            className="group"
           >
-            <div className="bg-white rounded-lg shadow-sm hover:shadow-lg transition duration-300 cursor-pointer overflow-hidden">
-
+            <div className="bg-white rounded-2xl shadow-md border border-[#4B8BBE]/20 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition">
               {/* Image */}
-              <div className="relative h-36 w-full">
+
+              <div className="relative h-48">
                 <Image
                   src={project.image}
                   alt={project.name}
@@ -62,50 +89,76 @@ export default function DistrictProjectsPage() {
                   className="object-cover"
                 />
 
-                {/* Corner Status Ribbon */}
-                {project.status === "delayed" && (
-                  <div className="absolute top-0 right-0 bg-red-600 text-white text-xs px-2 py-1">
-                    Delayed
-                  </div>
-                )}
+                {/* Status */}
 
-                {project.status === "risk" && (
-                  <div className="absolute top-0 right-0 bg-yellow-500 text-white text-xs px-2 py-1">
-                    Risk
-                  </div>
-                )}
+                <div
+                  className={`
 
-                {project.status === "onTime" && (
-                  <div className="absolute top-0 right-0 bg-green-600 text-white text-xs px-2 py-1">
-                    On Time
-                  </div>
-                )}
+                  absolute top-4 left-4
+
+                  px-3 py-1
+
+                  text-xs
+
+                  font-semibold
+
+                  rounded-full
+
+                  ${getStatus(project.status)}
+
+                `}
+                >
+                  {project.status === "delayed" && "Delayed"}
+
+                  {project.status === "risk" && "At Risk"}
+
+                  {project.status === "onTime" && "On Time"}
+                </div>
               </div>
 
               {/* Content */}
-              <div className="p-4 text-center">
 
-                <h2 className="text-sm font-semibold">
+              <div className="p-6">
+                <h2 className="text-lg font-semibold text-[#001F3F] mb-1">
                   {project.name}
                 </h2>
 
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-sm text-gray-500 mb-3">
                   {project.department}
                 </p>
 
-                <p className="text-sm text-blue-600 font-medium mt-2">
-                  {project.budget}
-                </p>
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-[#0A4D92] font-semibold">
+                    {project.budget}
+                  </span>
 
-                <p className="text-xs text-gray-500 mt-1">
-                  Progress: {project.progress}%
-                </p>
+                  <span className="text-sm text-gray-500">
+                    {project.progress}%
+                  </span>
+                </div>
 
+                {/* Progress Bar */}
+
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className={`
+
+                      h-2
+
+                      rounded-full
+
+                      ${getProgressColor(project.status)}
+
+                    `}
+                    style={{
+                      width: `${project.progress}%`,
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </Link>
         ))}
-
       </div>
     </div>
   );

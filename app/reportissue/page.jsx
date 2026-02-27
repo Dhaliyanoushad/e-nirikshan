@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { MapPin, Upload } from "lucide-react";
 
 export default function ReportIssuePage() {
-
   const MAX_REPORTS = 3;
 
   const [reportCount, setReportCount] = useState(0);
@@ -19,9 +19,9 @@ export default function ReportIssuePage() {
     email: "",
   });
 
-  // Load report count from browser
   useEffect(() => {
     const stored = localStorage.getItem("reportCount");
+
     if (stored) setReportCount(Number(stored));
   }, []);
 
@@ -32,7 +32,6 @@ export default function ReportIssuePage() {
     });
   };
 
-  // 📍 Capture Location
   const getLocation = () => {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -42,209 +41,191 @@ export default function ReportIssuePage() {
           longitude: pos.coords.longitude,
         }));
       },
-      () => alert("Location permission required")
+
+      () => alert("Location permission required"),
     );
   };
 
-  // Submit
   const handleSubmit = (e) => {
     e.preventDefault();
 
     if (reportCount >= MAX_REPORTS) {
-      alert("Maximum 3 reports allowed from this device");
+      alert("Maximum reports reached");
+
       return;
     }
 
     if (!formData.latitude) {
-      alert("Please capture location before submitting");
+      alert("Capture location first");
+
       return;
     }
 
     const newCount = reportCount + 1;
+
     localStorage.setItem("reportCount", newCount);
+
     setReportCount(newCount);
 
-    console.log(formData);
-
-    alert("Issue Submitted Successfully ✅");
+    alert("Issue submitted successfully");
   };
 
   return (
-    <div
-      className="min-h-screen p-8"
-      style={{ backgroundColor: "#F5F5F2" }}
-    >
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
+    <div className="min-h-screen bg-[#F5F9FC] py-32 px-6">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
 
-        {/* HEADER */}
-        <h1
-          className="text-3xl font-bold mb-2"
-          style={{ color: "#17513E" }}
-        >
-          Report Infrastructure Issue
-        </h1>
+        <div className="mb-8">
+          <p className="text-[#4B8BBE]">Home / Report Issue</p>
 
-        <p className="mb-4" style={{ color: "#6B7280" }}>
-          Verified citizen observations supporting transparent governance.
-        </p>
+          <h1 className="text-4xl font-bold text-[#001F3F] mt-2">
+            Report Infrastructure Issue
+          </h1>
 
-        <p className="mb-6 font-medium">
-          Reports Remaining :
-          <span style={{ color: "#CD481A" }}>
-            {" "} {MAX_REPORTS - reportCount}
-          </span>
-        </p>
+          <p className="text-gray-600 mt-2">
+            Help improve transparency by reporting issues in public projects
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Card */}
 
-          {/* PROJECT */}
-          <select
-            name="project"
-            required
-            onChange={handleChange}
-            className="w-full border p-3 rounded"
-          >
-            <option>Select Project</option>
-            <option>NH Road Expansion</option>
-            <option>Bridge Construction</option>
-          </select>
+        <div className="bg-white rounded-2xl shadow-lg border border-[#4B8BBE]/20 p-8">
+          {/* Remaining */}
 
-          {/* ISSUE TYPE */}
-          <select
-            name="issueType"
-            required
-            onChange={handleChange}
-            className="w-full border p-3 rounded"
-          >
-            <option>Issue Type</option>
-            <option>Work Stopped</option>
-            <option>Construction Delay</option>
-            <option>Poor Quality</option>
-            <option>Safety Hazard</option>
-          </select>
-
-          {/* DESCRIPTION */}
-          <textarea
-            name="description"
-            required
-            rows={4}
-            placeholder="Describe the issue"
-            onChange={handleChange}
-            className="w-full border p-3 rounded"
-          />
-
-          {/* FILE UPLOAD BOX */}
-          <div>
-            <label className="font-medium block mb-2">
-              Upload Evidence
-            </label>
-
-            <label
-              className="flex flex-col items-center justify-center
-              border-2 border-dashed rounded-lg p-6 cursor-pointer
-              hover:bg-gray-50"
-              style={{ borderColor: "#6B7280" }}
-            >
-              <p style={{ color: "#6B7280" }}>
-                Click to upload images
-              </p>
-
-              <input
-                type="file"
-                multiple
-                className="hidden"
-                onChange={(e) =>
-                  alert(`${e.target.files.length} file(s) selected`)
-                }
-              />
-            </label>
+          <div className="mb-6">
+            <p className="font-medium text-gray-600">
+              Reports Remaining :
+              <span className="text-[#0A4D92] font-bold ml-2">
+                {MAX_REPORTS - reportCount}
+              </span>
+            </p>
           </div>
 
-          {/* LOCATION */}
-          <div>
-            <label className="font-medium block mb-2">
-              Capture Location
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Project */}
+
+            <select
+              name="project"
+              required
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-lg p-3 focus:border-[#0A4D92] outline-none"
+            >
+              <option>Select Project</option>
+
+              <option>NH Road Expansion</option>
+
+              <option>Bridge Construction</option>
+            </select>
+
+            {/* Issue Type */}
+
+            <select
+              name="issueType"
+              required
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-lg p-3 focus:border-[#0A4D92]"
+            >
+              <option>Issue Type</option>
+
+              <option>Work Stopped</option>
+
+              <option>Construction Delay</option>
+
+              <option>Poor Quality</option>
+
+              <option>Safety Hazard</option>
+            </select>
+
+            {/* Description */}
+
+            <textarea
+              name="description"
+              required
+              rows="4"
+              placeholder="Describe the issue"
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-lg p-3 focus:border-[#0A4D92]"
+            />
+
+            {/* Upload */}
+
+            <label className="border-2 border-dashed border-[#4B8BBE]/40 rounded-lg p-8 flex flex-col items-center cursor-pointer hover:bg-[#F5F9FC] transition">
+              <Upload className="text-[#4B8BBE] mb-2" />
+              Upload Evidence
+              <input type="file" hidden />
             </label>
+
+            {/* Location */}
+
+            <div>
+              <button
+                type="button"
+                onClick={getLocation}
+                className="flex items-center gap-2 bg-[#0A4D92] text-white px-5 py-2 rounded-lg hover:bg-[#1B6F9A]"
+              >
+                <MapPin size={18} />
+                Capture Location
+              </button>
+
+              {formData.latitude && (
+                <p className="text-sm text-gray-500 mt-2">
+                  📍 Location captured
+                </p>
+              )}
+            </div>
+
+            {/* Severity */}
+
+            <div>
+              <p className="font-medium mb-2 text-[#001F3F]">Severity</p>
+
+              {["Low", "Medium", "High", "Critical"].map((level) => (
+                <label key={level} className="mr-6 text-gray-600">
+                  <input
+                    type="radio"
+                    name="severity"
+                    value={level}
+                    required
+                    onChange={handleChange}
+                  />{" "}
+                  {level}
+                </label>
+              ))}
+            </div>
+
+            {/* Reporter */}
+
+            <input
+              name="name"
+              placeholder="Name (Optional)"
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-lg p-3"
+            />
+
+            <input
+              name="email"
+              placeholder="Email (Optional)"
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-lg p-3"
+            />
+
+            {/* Declaration */}
+
+            <label className="flex gap-2 text-gray-600">
+              <input type="checkbox" required />I confirm information is
+              accurate
+            </label>
+
+            {/* Submit */}
 
             <button
-              type="button"
-              onClick={getLocation}
-              style={{ backgroundColor: "#17513E" }}
-              className="text-white px-5 py-2 rounded"
+              type="submit"
+              className="w-full bg-[#0A4D92] text-white py-3 rounded-lg font-semibold hover:bg-[#1B6F9A] transition"
             >
-              Capture Location
+              Submit Issue
             </button>
-
-            {/* RED WARNING */}
-            <p
-              className="mt-2 text-sm font-medium"
-              style={{ color: "#CD481A" }}
-            >
-              ⚠ Location access required. Reporting allowed only
-              within 500m of project site.
-            </p>
-
-            {formData.latitude && (
-              <p
-                className="mt-2 text-sm"
-                style={{ color: "#6B7280" }}
-              >
-                📍 {formData.latitude} ,
-                {" "}
-                {formData.longitude}
-              </p>
-            )}
-          </div>
-
-          {/* SEVERITY */}
-          <div>
-            <p className="font-medium mb-2">Severity</p>
-
-            {["Low", "Medium", "High", "Critical"].map((level) => (
-              <label key={level} className="mr-5">
-                <input
-                  type="radio"
-                  name="severity"
-                  value={level}
-                  required
-                  onChange={handleChange}
-                />
-                {" "} {level}
-              </label>
-            ))}
-          </div>
-
-          {/* REPORTER */}
-          <input
-            name="name"
-            placeholder="Name (Optional)"
-            onChange={handleChange}
-            className="w-full border p-3 rounded"
-          />
-
-          <input
-            name="email"
-            placeholder="Email (Optional)"
-            onChange={handleChange}
-            className="w-full border p-3 rounded"
-          />
-
-          {/* DECLARATION */}
-          <label className="flex gap-2">
-            <input type="checkbox" required />
-            I confirm submitted information is accurate.
-          </label>
-
-          {/* SUBMIT */}
-          <button
-            type="submit"
-            style={{ backgroundColor: "#CD481A" }}
-            className="w-full text-white py-3 rounded-lg font-semibold"
-          >
-            Submit Issue
-          </button>
-
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );
