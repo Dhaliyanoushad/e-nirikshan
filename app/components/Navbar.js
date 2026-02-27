@@ -1,58 +1,65 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
-  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
-  const links = ["Home", "Projects", "Map", "Dashboard"];
+  const links = [
+    { name: "Home", path: "/" },
+    { name: "Projects", path: "/projects" },
+    { name: "Map", path: "/map" },
+    { name: "Dashboard", path: "/dashboard" },
+  ];
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-[#547792]/20">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+    <nav className="sticky top-0 z-50 bg-[#F5F5F2] border-b border-gray-200">
+      <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
         {/* Logo */}
-        <h1 className="text-xl font-bold text-[#1A3263]">e-Nirikshan</h1>
+        <Link href="/">
+          <h1 className="text-3xl font-extrabold tracking-tight cursor-pointer">
+            <span className="text-[#CD481A]">e</span>
+            <span className="text-[#17513E]">-Nirikshan</span>
+          </h1>
+        </Link>
 
-        {/* Desktop menu */}
-        <div className="hidden md:flex gap-8 items-center">
-          {links.map((link, i) => (
-            <a
-              key={i}
-              href="#"
-              className="text-[#1A3263] hover:text-[#547792] transition"
-            >
-              {link}
-            </a>
-          ))}
+        {/* Nav Links */}
+        <div className="hidden md:flex items-center gap-10">
+          {links.map((link, i) => {
+            const isActive = pathname === link.path;
 
-          <button className="bg-[#FAB95B] text-black px-4 py-2 rounded-lg hover:opacity-90 transition">
+            return (
+              <Link
+                key={i}
+                href={link.path}
+                className={`relative font-medium transition ${
+                  isActive
+                    ? "text-[#CD481A]"
+                    : "text-[#17513E] hover:text-black"
+                }`}
+              >
+                {link.name}
+
+                {/* Underline animation */}
+                <span
+                  className={`absolute left-0 -bottom-1 h-[2px] bg-[#CD481A] transition-all duration-300 ${
+                    isActive ? "w-full" : "w-0 hover:w-full"
+                  }`}
+                />
+              </Link>
+            );
+          })}
+
+          {/* CTA */}
+          <Link
+            href="/reportissue"
+            className="bg-[#CD481A] text-white font-semibold px-5 py-2 rounded-md hover:opacity-90 transition"
+          >
             Report Issue
-          </button>
+          </Link>
         </div>
-
-        {/* Mobile menu button */}
-        <button
-          className="md:hidden text-[#1A3263]"
-          onClick={() => setOpen(!open)}
-        >
-          ☰
-        </button>
       </div>
-
-      {/* Mobile dropdown */}
-      {open && (
-        <div className="md:hidden px-6 pb-4 space-y-3 bg-white">
-          {links.map((link, i) => (
-            <a key={i} href="#" className="block text-[#1A3263]">
-              {link}
-            </a>
-          ))}
-
-          <button className="w-full bg-[#FAB95B] text-black py-2 rounded">
-            Report Issue
-          </button>
-        </div>
-      )}
     </nav>
   );
 }
