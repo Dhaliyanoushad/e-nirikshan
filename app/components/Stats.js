@@ -1,18 +1,30 @@
-const stats = [
-  { label: "Total Projects", value: "12,540" },
-  { label: "Active Projects", value: "8,210" },
-  { label: "Delayed Projects", value: "1,430" },
-  { label: "Budget Utilization", value: "74%" },
-];
-
 export default function Stats() {
+  const stats = [
+    { title: "Total Projects", value: "1,284" },
+    { title: "Ongoing", value: "643" },
+    { title: "Completed", value: "512" },
+    { title: "Delayed", value: "129" },
+  ];
+
   return (
-    <section className="px-6 py-10">
-      <div className="grid md:grid-cols-4 gap-6">
-        {stats.map((s, i) => (
-          <div key={i} className="bg-white p-6 rounded-xl shadow text-center">
-            <p className="text-3xl font-bold text-[#1A3263]">{s.value}</p>
-            <p className="text-[#547792]">{s.label}</p>
+    <section className="bg-white py-20 px-8">
+      <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-8">
+        {stats.map((stat, i) => (
+          <div
+            key={i}
+            className="
+              bg-[#001F3F]
+              text-white
+              p-8
+              rounded-xl
+              shadow-lg
+              hover:bg-[#0A4D92]
+              transition
+            "
+          >
+            <h2 className="text-4xl font-bold mb-2">{stat.value}</h2>
+
+            <p className="text-[#4B8BBE]">{stat.title}</p>
           </div>
         ))}
       </div>
