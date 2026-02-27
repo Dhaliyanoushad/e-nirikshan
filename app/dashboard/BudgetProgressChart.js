@@ -11,11 +11,11 @@ import {
 } from "recharts";
 
 const data = [
-  { name: "District A", budget: 80, progress: 65 },
-  { name: "District B", budget: 60, progress: 55 },
-  { name: "District C", budget: 90, progress: 70 },
-  { name: "District D", budget: 75, progress: 50 },
-  { name: "District E", budget: 85, progress: 80 },
+  { name: "Ernakulam", budget: 90, progress: 55 },
+  { name: "Kozhikode", budget: 60, progress: 55 },
+  { name: "Kannur", budget: 90, progress: 70 },
+  { name: "Idukki", budget: 85, progress: 50 },
+  { name: "Malapuram", budget: 75, progress: 60 },
 ];
 
 export default function BudgetProgressChart() {
