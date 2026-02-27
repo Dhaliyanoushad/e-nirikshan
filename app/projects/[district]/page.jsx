@@ -1,41 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
-const projects = [
-  {
-    id: "road-001",
-    name: "Road Expansion Project",
-    department: "PWD",
-    budget: "₹10 Cr",
-    progress: 60,
-    status: "risk",
-    image: "/projects/road.jpg",
-  },
-  {
-    id: "bridge-002",
-    name: "Bridge Construction",
-    department: "PWD",
-    budget: "₹25 Cr",
-    progress: 40,
-    status: "delayed",
-    image: "/projects/bridge.jpg",
-  },
-  {
-    id: "hospital-003",
-    name: "Hospital Upgrade",
-    department: "Health",
-    budget: "₹15 Cr",
-    progress: 80,
-    status: "onTime",
-    image: "/projects/hospital.jpg",
-  },
-];
+import { supabase } from "../../../lib/supabase";
 
 export default function DistrictProjectsPage() {
   const { district } = useParams();
+
+  const [projects, setProjects] = useState([]);
+
+  useEffect(() => {
+    fetchProjects();
+  }, [district]);
+
+  const fetchProjects = async () => {
+    if (!district) return;
+
+    const { data, error } = await supabase
+
+      .from("projects")
+
+      .select("*")
+
+      .eq("district", district.toLowerCase())
+
+      .order("id", { ascending: true });
+
+    if (error) console.error(error);
+    else setProjects(data);
+  };
 
   const getStatus = (status) => {
     if (status === "delayed") return "bg-red-100 text-red-600";
@@ -58,7 +53,7 @@ export default function DistrictProjectsPage() {
       {/* Header */}
 
       <div className="max-w-7xl mx-auto mb-12">
-        <p className="text-[#4B8BBE] mb-2">Home / Projects / {district}</p>
+        <p className="text-[#4B8BBE]">Home / Projects / {district}</p>
 
         <h1 className="text-4xl font-bold text-[#001F3F] capitalize">
           {district} Projects
@@ -71,94 +66,85 @@ export default function DistrictProjectsPage() {
 
       {/* Grid */}
 
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         {projects.map((project) => (
           <Link
             key={project.id}
             href={`/projects/${district}/${project.id}`}
             className="group"
           >
-            <div className="bg-white rounded-2xl shadow-md border border-[#4B8BBE]/20 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition">
-              {/* Image */}
+            <div className="bg-white rounded-2xl shadow-md border border-[#4B8BBE]/20 p-6 hover:shadow-xl hover:-translate-y-1 transition">
+              {/* Status */}
 
-              <div className="relative h-48">
-                <Image
-                  src={project.image}
-                  alt={project.name}
-                  fill
-                  className="object-cover"
-                />
+              <div
+                className={`
 
-                {/* Status */}
+                inline-block
 
+                px-3 py-1
+
+                text-xs
+
+                font-semibold
+
+                rounded-full
+
+                mb-3
+
+                ${getStatus(project.status)}
+
+              `}
+              >
+                {project.status}
+              </div>
+
+              {/* Project Name */}
+
+              <h2 className="text-lg font-semibold text-[#001F3F]">
+                {project.project_name}
+              </h2>
+
+              {/* Department */}
+
+              <p className="text-sm text-gray-500 mb-2">{project.department}</p>
+
+              {/* Budget + Progress */}
+
+              <div className="flex justify-between text-sm">
+                <span className="text-[#0A4D92] font-semibold">
+                  {project.budget}
+                </span>
+
+                <span>{project.progress}%</span>
+              </div>
+
+              {/* Progress Bar */}
+
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                 <div
                   className={`
 
-                  absolute top-4 left-4
+                    h-2
 
-                  px-3 py-1
+                    rounded-full
 
-                  text-xs
+                    ${getProgressColor(project.status)}
 
-                  font-semibold
-
-                  rounded-full
-
-                  ${getStatus(project.status)}
-
-                `}
-                >
-                  {project.status === "delayed" && "Delayed"}
-
-                  {project.status === "risk" && "At Risk"}
-
-                  {project.status === "onTime" && "On Time"}
-                </div>
-              </div>
-
-              {/* Content */}
-
-              <div className="p-6">
-                <h2 className="text-lg font-semibold text-[#001F3F] mb-1">
-                  {project.name}
-                </h2>
-
-                <p className="text-sm text-gray-500 mb-3">
-                  {project.department}
-                </p>
-
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-[#0A4D92] font-semibold">
-                    {project.budget}
-                  </span>
-
-                  <span className="text-sm text-gray-500">
-                    {project.progress}%
-                  </span>
-                </div>
-
-                {/* Progress Bar */}
-
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className={`
-
-                      h-2
-
-                      rounded-full
-
-                      ${getProgressColor(project.status)}
-
-                    `}
-                    style={{
-                      width: `${project.progress}%`,
-                    }}
-                  />
-                </div>
+                  `}
+                  style={{
+                    width: `${project.progress}%`,
+                  }}
+                />
               </div>
             </div>
           </Link>
         ))}
+
+        {/* Empty state */}
+
+        {projects.length === 0 && (
+          <p className="text-gray-500">No projects found</p>
+        )}
       </div>
     </div>
   );
