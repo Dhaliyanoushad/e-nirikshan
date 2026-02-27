@@ -1,21 +1,24 @@
 import Hero from "./components/Hero";
 import Stats from "./components/Stats";
-import Snapshot from "./components/Snapshot";
-import MapPreview from "./components/MapPreview";
-import HowItWorks from "./components/HowItWorks";
-import RecentProjects from "./components/RecentProjects";
-import TransparencyIndex from "./components/TransparencyIndex";
+import About from "./components/About";
+import Problem from "./components/Problem";
+import Capabilities from "./components/Capabilities";
+import Updates from "./components/Updates";
 
 export default function Home() {
   return (
-    <main className="bg-[#E8E2DB]">
+    <main>
       <Hero />
+
       <Stats />
-      <Snapshot />
-      <MapPreview />
-      <HowItWorks />
-      <RecentProjects />
-      <TransparencyIndex />
+
+      <About />
+
+      <Problem />
+
+      <Capabilities />
+
+      <Updates />
     </main>
   );
 }

@@ -14,18 +14,28 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 bg-[#F5F5F2] border-b border-gray-200">
-      <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+    <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50">
+      {/* Pill container */}
+      <nav
+        className="
+        flex items-center gap-8
+        px-8 py-4
+        rounded-full
+        bg-[#001F3F]/80
+        backdrop-blur-xl
+        border border-[#4B8BBE]/30
+        shadow-xl
+      "
+      >
         {/* Logo */}
-        <Link href="/">
-          <h1 className="text-3xl font-extrabold tracking-tight cursor-pointer">
-            <span className="text-[#CD481A]">e</span>
-            <span className="text-[#17513E]">-Nirikshan</span>
-          </h1>
+        <Link href="/" className="text-xl font-bold">
+          <span className="text-[#4B8BBE]">e</span>
+
+          <span className="text-white">-Nirikshan</span>
         </Link>
 
-        {/* Nav Links */}
-        <div className="hidden md:flex items-center gap-10">
+        {/* Links */}
+        <div className="flex items-center gap-8">
           {links.map((link, i) => {
             const isActive = pathname === link.path;
 
@@ -33,33 +43,55 @@ export default function Navbar() {
               <Link
                 key={i}
                 href={link.path}
-                className={`relative font-medium transition ${
-                  isActive
-                    ? "text-[#CD481A]"
-                    : "text-[#17513E] hover:text-black"
-                }`}
+                className={`
+                  relative
+                  transition
+                  font-medium
+                  ${
+                    isActive
+                      ? "text-white"
+                      : "text-gray-300 hover:text-[#4B8BBE]"
+                  }
+                `}
               >
                 {link.name}
 
-                {/* Underline animation */}
-                <span
-                  className={`absolute left-0 -bottom-1 h-[2px] bg-[#CD481A] transition-all duration-300 ${
-                    isActive ? "w-full" : "w-0 hover:w-full"
-                  }`}
-                />
+                {/* Active dot */}
+                {isActive && (
+                  <span
+                    className="
+                    absolute
+                    left-1/2
+                    -bottom-3
+                    -translate-x-1/2
+                    w-1.5 h-1.5
+                    rounded-full
+                    bg-[#4B8BBE]
+                  "
+                  />
+                )}
               </Link>
             );
           })}
-
-          {/* CTA */}
-          <Link
-            href="/reportissue"
-            className="bg-[#CD481A] text-white font-semibold px-5 py-2 rounded-md hover:opacity-90 transition"
-          >
-            Report Issue
-          </Link>
         </div>
-      </div>
-    </nav>
+
+        {/* CTA */}
+        <Link
+          href="/reportissue"
+          className="
+            bg-[#0A4D92]
+            text-white
+            px-5 py-2
+            rounded-full
+            font-medium
+            hover:bg-[#1B6F9A]
+            transition
+            duration-300
+          "
+        >
+          Report Issue
+        </Link>
+      </nav>
+    </div>
   );
 }
