@@ -1,38 +1,44 @@
-import { supabase } from "@/lib/supabase";
-import { verifyProgress } from "@/lib/gemini";
-import { getNews } from "@/lib/news";
-import { getExpectedPhase } from "@/lib/timeline";
+import { supabase } from "../../../lib/supabase";
+
+import { verifyProgress } from "../../../lib/gemini";
+
+import { getExpectedProgress } from "../../../lib/progressTimeline";
+
 
 export const runtime = "nodejs";
+
 
 export async function POST(req) {
 
 try {
 
+// =====================================
 // 1. Read form data
+// =====================================
 
-const form = await req.formData();
+const formData = await req.formData();
 
-const projectId = form.get("projectId");
+const projectId = formData.get("project_id");
 
-const photo = form.get("photo");
+const image = formData.get("image");
 
 
-if (!projectId || !photo) {
+if (!projectId || !image) {
 
 return Response.json({
 
 success: false,
 
-error: "Missing projectId or photo"
+error: "Missing project_id or image"
 
 }, { status: 400 });
 
 }
 
 
-
-// 2. Fetch project
+// =====================================
+// 2. Fetch project from database
+// =====================================
 
 const { data: project, error: projectError } = await supabase
 
@@ -58,71 +64,109 @@ error: "Project not found"
 }
 
 
-
-// 3. Save photo to storage (optional, for record)
-
-const filePath = `photos/${projectId}-${Date.now()}.jpg`;
-
-const { error: uploadError } = await supabase.storage
-
-.from("photos")
-
-.upload(filePath, photo);
-
-
-if (uploadError) {
-
-console.error(uploadError);
-
-}
-
-
-
-// 4. Convert photo → buffer for Gemini
+// =====================================
+// 3. Convert image → buffer
+// =====================================
 
 const imageBuffer = Buffer.from(
 
-await photo.arrayBuffer()
+await image.arrayBuffer()
 
 );
 
 
+// =====================================
+// 4. Send image to Gemini
+// =====================================
 
-// 5. Get news
+const analysis = await verifyProgress({
 
-const news = await getNews(project.location);
+imageBuffer,
+
+expectedPhase: "",
+
+news: "",
+
+summary: project.project_summary
+
+});
 
 
+const actualProgress =
 
-// 6. Get expected phase
+analysis?.completionPercent || 0;
 
-const phase = getExpectedPhase(
+
+// =====================================
+// 5. Calculate expected progress
+// =====================================
+
+const expected = getExpectedProgress(
 
 project.start_date,
+
+project.end_date,
 
 project.contractor_report_timeline
 
 );
 
 
-
-// 7. Call Gemini with image buffer (NOT URL)
-
-const gemini = await verifyProgress({
-
-imageBuffer,
-
-expectedPhase: phase.phase,
-
-news: news,
-
-projectSummary: project.project_summary
-
-});
+const expectedProgress = expected.expectedProgress;
 
 
+// =====================================
+// 6. Compare expected vs actual
+// =====================================
 
+let status;
+
+let delayPercent = 0;
+
+let suggestion;
+
+
+if (actualProgress >= expectedProgress) {
+
+status = "on_track";
+
+suggestion = "Project is progressing on schedule.";
+
+}
+else {
+
+status = "delayed";
+
+delayPercent = expectedProgress - actualProgress;
+
+suggestion =
+
+`Project delayed by ${delayPercent}%.
+Increase manpower, extend work hours, or optimize resources.`;
+
+}
+
+
+// =====================================
+// 7. Save image to Supabase Storage
+// =====================================
+
+const filePath =
+
+`project-photos/${projectId}-${Date.now()}.jpg`;
+
+
+await supabase.storage
+
+.from("project-photos")
+
+.upload(filePath, image);
+
+
+
+// =====================================
 // 8. Update database
+// =====================================
 
 const { error: updateError } = await supabase
 
@@ -134,17 +178,27 @@ latest_photo: {
 
 storage_path: filePath,
 
-analysis: gemini
+stage: analysis?.stage,
+
+completionPercent: actualProgress,
+
+date: new Date()
 
 },
 
-latest_news: news,
-
 gemini_suggestions: {
 
-suggestion: gemini?.suggestion || null,
+status,
 
-delayRisk: gemini?.delayRisk || null
+expectedPhase: expected.phase,
+
+expectedProgress,
+
+actualProgress,
+
+delayPercent,
+
+suggestion
 
 }
 
@@ -155,27 +209,36 @@ delayRisk: gemini?.delayRisk || null
 
 if (updateError) {
 
-console.error(updateError);
-
 return Response.json({
 
 success: false,
 
-error: "Database update failed"
+error: updateError.message
 
 }, { status: 500 });
 
 }
 
 
-
-// 9. Return success
+// =====================================
+// 9. Return result
+// =====================================
 
 return Response.json({
 
 success: true,
 
-analysis: gemini
+expectedPhase: expected.phase,
+
+expectedProgress,
+
+actualProgress,
+
+delayPercent,
+
+status,
+
+suggestion
 
 });
 
@@ -184,7 +247,7 @@ analysis: gemini
 
 catch (error) {
 
-console.error("Update project error:", error);
+console.error(error);
 
 return Response.json({
 
