@@ -319,12 +319,45 @@ export default function ContractorPage() {
 
             {/* IMAGE PREVIEW */}
 
-            {project.latest_photo?.url && (
-              <img
-                src={project.latest_photo.url}
-                className="mt-3 w-48 rounded border"
-              />
-            )}
+            {project.latest_photo &&
+              (() => {
+                let photo;
+
+                try {
+                  photo =
+                    typeof project.latest_photo === "string"
+                      ? JSON.parse(project.latest_photo)
+                      : project.latest_photo;
+                } catch {
+                  return null;
+                }
+
+                // GET IMAGE URL SAFELY
+
+                let imageUrl = null;
+
+                if (photo.storage_path) {
+                  imageUrl = supabase.storage
+                    .from("project-photos")
+                    .getPublicUrl(photo.storage_path).data.publicUrl;
+                } else if (photo.url) {
+                  imageUrl = photo.url;
+                }
+
+                if (!imageUrl) return null;
+
+                return (
+                  <div className="mt-3">
+                    <img src={imageUrl} className="w-48 rounded border" />
+
+                    {photo.date && (
+                      <p className="text-sm text-gray-600 mt-1">
+                        📅 {new Date(photo.date).toLocaleString("en-IN")}
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
 
             {/* PHOTO SELECT */}
 
@@ -350,23 +383,87 @@ export default function ContractorPage() {
               <div className="mt-4 bg-blue-50 p-3 rounded">
                 <p className="font-semibold text-blue-800">AI Suggestions</p>
 
+                {/* Status */}
+
                 <p className="text-sm text-blue-700">
-                  {project.gemini_suggestions.summary}
+                  <b>Status:</b> {project.gemini_suggestions.status}
+                </p>
+
+                {/* Progress */}
+
+                <p className="text-sm text-blue-700">
+                  <b>Progress:</b> {project.gemini_suggestions.progress}
+                </p>
+
+                {/* Suggestion */}
+
+                <p className="text-sm text-blue-700">
+                  <b>Suggestion:</b> {project.gemini_suggestions.suggestion}
+                </p>
+
+                {/* Completion */}
+
+                <p className="text-sm text-blue-700">
+                  <b>Completion:</b>{" "}
+                  {project.gemini_suggestions.completionPercent}%
+                </p>
+
+                {/* Delay */}
+
+                <p className="text-sm text-blue-700">
+                  <b>Delay Risk:</b> {project.gemini_suggestions.delayRisk}
+                </p>
+
+                {/* Expected Phase */}
+
+                <p className="text-sm text-blue-700">
+                  <b>Expected Phase:</b>{" "}
+                  {project.gemini_suggestions.expectedPhase}
                 </p>
               </div>
             )}
 
             {/* Timeline */}
 
-            {project.contractor_report_timeline && (
+            {project.contractor_report_timeline?.length > 0 && (
               <div className="mt-4">
                 <p className="font-semibold">Timeline</p>
 
-                {project.contractor_report_timeline.map((t, i) => (
-                  <div key={i} className="text-sm text-gray-700">
-                    {t.start}-{t.end} Month → {t.phase}
-                  </div>
-                ))}
+                {project.contractor_report_timeline.map((t, i) => {
+                  const projectStart = new Date(project.start_date);
+
+                  // function to add months
+                  const addMonths = (date, months) => {
+                    const d = new Date(date);
+
+                    d.setMonth(d.getMonth() + months);
+
+                    return d;
+                  };
+
+                  const phaseStart = addMonths(projectStart, t.start);
+
+                  const phaseEnd = addMonths(projectStart, t.end);
+
+                  return (
+                    <div key={i} className="text-sm text-gray-700 mb-2">
+                      📅{" "}
+                      {phaseStart.toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                      {" → "}
+                      {phaseEnd.toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                      <br />
+                      🏗️ {t.phase}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
