@@ -19,131 +19,105 @@ export default function DistrictProjectsPage() {
     if (!district) return;
 
     const { data, error } = await supabase
-
       .from("projects")
-
       .select("*")
-
       .eq("district", district.toLowerCase())
-
       .order("id", { ascending: true });
 
     if (error) console.error(error);
     else setProjects(data);
   };
 
-  const getStatus = (status) => {
-    if (status === "delayed") return "bg-red-100 text-red-600";
-
-    if (status === "risk") return "bg-yellow-100 text-yellow-600";
-
-    return "bg-green-100 text-green-600";
+  const getStatusColor = (status) => {
+    if (status === "delayed") return "text-red-600";
+    if (status === "risk") return "text-yellow-600";
+    return "text-green-600";
   };
 
   const getProgressColor = (status) => {
     if (status === "delayed") return "bg-red-500";
-
     if (status === "risk") return "bg-yellow-500";
-
-    return "bg-green-500";
+    return "bg-blue-600";
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F9FC] px-8 py-12">
-      {/* Header */}
+    <div className="bg-[#F5F9FC] min-h-screen pt-28">
+      {/* HEADER */}
 
-      <div className="max-w-7xl mx-auto mb-12">
-        <p className="text-[#4B8BBE]">Home / Projects / {district}</p>
+      <div className="bg-[#001F3F] text-white px-12 py-10 shadow mb-10">
+        <p className="text-sm text-[#4B8BBE] mb-1">District Command Center</p>
 
-        <h1 className="text-4xl font-bold text-[#001F3F] capitalize">
-          {district} Projects
+        <h1 className="text-4xl font-bold capitalize">
+          {district} Infrastructure
         </h1>
 
-        <p className="text-gray-600 mt-2">
-          Monitor project progress and status
+        <p className="text-sm text-gray-300 mt-2">
+          Total Projects: {projects.length}
         </p>
       </div>
 
-      {/* Grid */}
+      {/* PROJECT LIST */}
 
-      <div className="max-w-7xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto px-10 pb-16 space-y-6">
         {projects.map((project) => (
-          <Link
-            key={project.id}
-            href={`/projects/${district}/${project.id}`}
-            className="group"
-          >
-            <div className="bg-white rounded-2xl shadow-md border border-[#4B8BBE]/20 p-6 hover:shadow-xl hover:-translate-y-1 transition">
-              {/* Status */}
+          <Link key={project.id} href={`/projects/${district}/${project.id}`}>
+            <div className="bg-white border border-[#001F3F]/10 rounded-xl px-8 py-7 hover:shadow-lg hover:border-[#0074D9] transition cursor-pointer">
+              <div className="grid grid-cols-5 items-center gap-6">
+                {/* LEFT */}
 
-              <div
-                className={`
+                <div className="col-span-2">
+                  <h2 className="text-lg font-semibold text-[#001F3F]">
+                    {project.project_name}
+                  </h2>
 
-                inline-block
+                  <p className="text-sm text-gray-500 mt-1">
+                    {project.department}
+                  </p>
+                </div>
 
-                px-3 py-1
+                {/* LOCATION */}
 
-                text-xs
+                <div className="text-sm text-gray-700">{project.location}</div>
 
-                font-semibold
+                {/* BUDGET */}
 
-                rounded-full
-
-                mb-3
-
-                ${getStatus(project.status)}
-
-              `}
-              >
-                {project.status}
-              </div>
-
-              {/* Project Name */}
-
-              <h2 className="text-lg font-semibold text-[#001F3F]">
-                {project.project_name}
-              </h2>
-
-              {/* Department */}
-
-              <p className="text-sm text-gray-500 mb-2">{project.department}</p>
-
-              {/* Budget + Progress */}
-
-              <div className="flex justify-between text-sm">
-                <span className="text-[#0A4D92] font-semibold">
+                <div className="font-semibold text-[#0A4D92]">
                   {project.budget}
-                </span>
+                </div>
 
-                <span>{project.progress}%</span>
-              </div>
+                {/* RIGHT */}
 
-              {/* Progress Bar */}
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span
+                      className={`font-semibold ${getStatusColor(project.status)}`}
+                    >
+                      {project.status}
+                    </span>
 
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                <div
-                  className={`
+                    <span className="text-gray-600">{project.progress}%</span>
+                  </div>
 
-                    h-2
-
-                    rounded-full
-
-                    ${getProgressColor(project.status)}
-
-                  `}
-                  style={{
-                    width: `${project.progress}%`,
-                  }}
-                />
+                  <div className="w-full bg-gray-200 h-2 rounded-full">
+                    <div
+                      className={`h-2 rounded-full ${getProgressColor(project.status)}`}
+                      style={{
+                        width: `${project.progress}%`,
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </Link>
         ))}
 
-        {/* Empty state */}
+        {/* EMPTY */}
 
         {projects.length === 0 && (
-          <p className="text-gray-500">No projects found</p>
+          <div className="text-center text-gray-500 pt-20">
+            No projects found
+          </div>
         )}
       </div>
     </div>

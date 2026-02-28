@@ -14,26 +14,30 @@ export default function Hero() {
 
   return (
     <section className="relative min-h-screen flex items-center px-8 md:px-16 overflow-hidden">
-      {/* Background image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/jcb.jpg')" }}
-      />
+      {/* VIDEO BACKGROUND */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+      >
+        <source src="/jcb.mp4" type="video/mp4" />
+      </video>
 
-      {/* Dark navy gradient overlay */}
+      {/* Dark navy overlay */}
       <div className="absolute inset-0 bg-gradient-to-r from-[#001F3F]/90 via-[#001F3F]/70 to-transparent" />
 
-      {/* Brand blue tint overlay */}
+      {/* Brand blue tint */}
       <div className="absolute inset-0 bg-[#0A4D92]/30" />
 
-      {/* Content */}
+      {/* CONTENT */}
       <div className="relative z-10 max-w-3xl text-left">
         <p className="text-[#4B8BBE] text-lg mb-4 font-medium">
           Public Monitoring Platform
         </p>
 
-        {/* Main Title */}
-        <h1 className="text-6xl md:text-7xl font-black leading-tight mb-6 text-white">
+        <h1 className="text-6xl md:text-7xl font-black text-white mb-6">
           e-Nirikshan
         </h1>
 
@@ -42,27 +46,18 @@ export default function Hero() {
           real-time citizen participation.
         </p>
 
-        {/* Glass Search */}
+        {/* SEARCH */}
         <div className="flex max-w-xl backdrop-blur-xl bg-white/95 rounded-full overflow-hidden shadow-2xl border border-[#4B8BBE]/40">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search any public project"
-            className="flex-1 px-6 py-4 outline-none text-[#001F3F] bg-transparent placeholder-gray-500"
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            className="flex-1 px-6 py-4 outline-none text-[#001F3F]"
           />
 
           <button
             onClick={handleSearch}
-            className="
-              bg-[#0A4D92]
-              text-white
-              px-8
-              font-semibold
-              hover:bg-[#1B6F9A]
-              transition
-              duration-300
-            "
+            className="bg-[#0A4D92] text-white px-8 font-semibold hover:bg-[#1B6F9A]"
           >
             Search
           </button>

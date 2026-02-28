@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+// Importing a user icon for the button, though standard text works too
+import { UserCircle } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -52,6 +54,16 @@ export default function Footer() {
             <li>
               <Link href="/reportissue" className="hover:text-white">
                 Report Issue
+              </Link>
+            </li>
+
+            {/* CONTRACTOR LOGIN BUTTON */}
+            <li className="pt-4">
+              <Link href="/login">
+                <button className="flex items-center gap-2 bg-[#4B8BBE] hover:bg-[#3b6d96] text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-lg">
+                  <UserCircle size={18} />
+                  Contractor Login
+                </button>
               </Link>
             </li>
           </ul>

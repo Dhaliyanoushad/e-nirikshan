@@ -1,63 +1,66 @@
 "use client";
 
 import Link from "next/link";
-import { MapPin } from "lucide-react";
+import { MapPin, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
-
 import { supabase } from "../../lib/supabase";
 
 export default function ProjectsPage() {
   const [districts, setDistricts] = useState([]);
+  const [counts, setCounts] = useState({});
 
   useEffect(() => {
     fetchDistricts();
   }, []);
 
-  const fetchDistricts = async () => {
-    const { data, error } = await supabase
+  // Capitalize function
 
-      .from("projects")
+  function capitalize(text) {
+    if (!text) return "";
 
-      .select("district");
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  }
 
-    if (error) {
-      console.error(error);
+  async function fetchDistricts() {
+    const { data, error } = await supabase.from("projects").select("district");
 
-      return;
-    }
+    if (error) return;
 
-    // remove duplicates
+    const unique = [...new Set(data.map((i) => i.district).filter(Boolean))];
 
-    const uniqueDistricts = [
-      ...new Set(
-        data
+    // count projects per district
 
-          .map((item) => item.district)
+    const countMap = {};
 
-          .filter(Boolean),
-      ),
-    ];
+    data.forEach((p) => {
+      if (!p.district) return;
 
-    setDistricts(uniqueDistricts);
-  };
+      countMap[p.district] = (countMap[p.district] || 0) + 1;
+    });
+
+    setDistricts(unique);
+    setCounts(countMap);
+  }
 
   return (
-    <div className="min-h-screen bg-[#F5F9FC] px-8 py-32">
-      {/* Header */}
+    <div className="min-h-screen bg-[#F5F9FC] pt-32 pb-20 px-8">
+      {/* HEADER */}
 
-      <div className="max-w-7xl mx-auto mb-12">
-        <p className="text-[#4B8BBE] mb-2">Home / Projects</p>
+      <div className="max-w-7xl mx-auto mb-14">
+        <p className="text-[#4B8BBE] text-sm mb-2">Infrastructure Monitoring</p>
 
-        <h1 className="text-4xl font-bold text-[#001F3F]">Select District</h1>
+        <h1 className="text-4xl font-bold text-[#001F3F] mb-2">
+          District Command Center
+        </h1>
 
-        <p className="text-gray-600 mt-2">
-          Choose a district to view all infrastructure projects
+        <p className="text-gray-600">
+          Select a district to view and monitor public infrastructure projects
         </p>
       </div>
 
-      {/* Grid */}
+      {/* GRID */}
 
-      <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {districts.map((district, index) => (
           <Link
             key={district}
@@ -67,62 +70,91 @@ export default function ProjectsPage() {
             <div
               className="
 
-              relative
 
-              bg-white
+bg-white
 
-              rounded-2xl
+rounded-xl
 
-              p-8
+p-6
 
-              shadow-md
+border border-[#4B8BBE]/20
 
-              border border-[#4B8BBE]/20
+shadow-sm
 
-              hover:shadow-xl
+hover:shadow-lg
 
-              hover:-translate-y-1
+hover:border-[#0A4D92]
 
-              transition
+transition
 
-            "
+duration-300
+
+flex
+
+justify-between
+
+items-center
+
+"
             >
-              {/* glow */}
+              {/* LEFT */}
 
-              <div
-                className="
+              <div>
+                <div className="flex items-center gap-3 mb-1">
+                  <MapPin size={18} className="text-[#4B8BBE]" />
 
-                absolute inset-0
+                  <h2
+                    className="
 
-                rounded-2xl
+text-lg
 
-                bg-gradient-to-r from-[#0A4D92] to-[#4B8BBE]
+font-semibold
 
-                opacity-0
+text-[#001F3F]
 
-                group-hover:opacity-10
+group-hover:text-[#0A4D92]
 
-              "
-              />
+transition
 
-              {/* content */}
-
-              <div className="relative flex justify-between items-center">
-                <div>
-                  <h2 className="text-xl font-semibold text-[#001F3F]">
-                    {district}
+"
+                  >
+                    {capitalize(district)}
                   </h2>
-
-                  <p className="text-sm text-gray-500">View Projects</p>
                 </div>
 
-                <MapPin className="text-[#4B8BBE]" />
+                <p className="text-sm text-gray-500">
+                  {counts[district] || 0} Projects
+                </p>
               </div>
 
-              {/* number */}
+              {/* RIGHT */}
 
-              <div className="absolute top-4 right-4 text-xs text-white bg-[#0A4D92] px-2 py-1 rounded">
-                {String(index + 1).padStart(2, "0")}
+              <div className="flex items-center gap-4">
+                <div
+                  className="
+
+text-xs
+
+text-[#4B8BBE]
+
+font-medium
+
+"
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </div>
+
+                <ChevronRight
+                  className="
+
+text-[#4B8BBE]
+
+group-hover:translate-x-1
+
+transition
+
+"
+                />
               </div>
             </div>
           </Link>
