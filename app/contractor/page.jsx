@@ -180,7 +180,7 @@ export default function ContractorPage() {
       <aside className="w-80 bg-[#001F3F] text-white flex flex-col shadow-xl">
         <div className="p-6 border-b border-white/10">
           <h1 className="text-xl font-bold flex items-center gap-2 italic">
-            <Layout size={24} /> BuildSense AI
+            <Layout size={24} /> e-Nirikshan
           </h1>
         </div>
 
