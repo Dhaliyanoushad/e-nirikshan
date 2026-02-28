@@ -2,104 +2,163 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-
 import { supabase } from "../../../../lib/supabase";
 
 export default function ProjectDetailPage() {
-  const { district, projectId } = useParams();
+  const { projectId } = useParams();
 
   const [project, setProject] = useState(null);
 
   useEffect(() => {
     fetchProject();
-  }, [projectId]);
+  }, []);
 
-  const fetchProject = async () => {
-    const { data, error } = await supabase
-
+  async function fetchProject() {
+    const { data } = await supabase
       .from("projects")
-
       .select("*")
-
       .eq("id", projectId)
-
       .single();
 
-    if (error) console.error(error);
-    else setProject(data);
-  };
+    setProject(data);
+  }
 
-  if (!project) return <div className="p-8">Loading...</div>;
+  if (!project)
+    return (
+      <div className="h-screen flex justify-center items-center bg-[#F5F9FC]">
+        Loading...
+      </div>
+    );
 
   return (
-    <div className="p-8 space-y-8 bg-[#F5F9FC] min-h-screen">
-      {/* Title */}
+    <div className="bg-[#F5F9FC] min-h-screen">
+      {/* HEADER */}
 
-      <h1 className="text-3xl font-bold text-[#001F3F]">
-        {project.project_name}
-      </h1>
+      <div className="bg-[#001F3F] text-white px-10 py-6 shadow">
+        <div className="text-sm opacity-70">Project Intelligence Dashboard</div>
 
-      {/* Basic Info */}
-
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
-
-        <p>District: {project.district}</p>
-
-        <p>Location: {project.location}</p>
-
-        <p>Department: {project.department}</p>
-
-        <p>Officer: {project.officer}</p>
-
-        <p>Contractor: {project.contractor}</p>
-
-        <p>Start Date: {project.startdate}</p>
-
-        <p>Expected End: {project.enddate}</p>
+        <div className="text-3xl font-semibold mt-1">
+          {project.project_name}
+        </div>
       </div>
 
-      {/* Budget */}
+      <div className="p-10 grid grid-cols-3 gap-8">
+        {/* LEFT PANEL */}
 
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h2 className="text-xl font-semibold mb-4">Budget Details</h2>
+        <div className="bg-white rounded-xl shadow p-6 space-y-6">
+          <Section title="Project Information">
+            <Info label="District" value={project.district} />
 
-        <p>Total Budget: {project.total_budget}</p>
+            <Info label="Location" value={project.location} />
 
-        <p>Funds Released: {project.funds_released}</p>
+            <Info label="Department" value={project.department} />
 
-        <p>Funds Used: {project.funds_used}</p>
+            <Info label="Officer In Charge" value={project.officer} />
+
+            <Info label="Contractor" value={project.contractor} />
+          </Section>
+
+          <Section title="Timeline">
+            <Info label="Start Date" value={project.startdate} />
+
+            <Info label="Expected Completion" value={project.enddate} />
+
+            <Info label="Current Stage" value={project.current_stage} />
+
+            <Info label="Status" value={project.status} />
+          </Section>
+        </div>
+
+        {/* RIGHT PANEL */}
+
+        <div className="col-span-2 space-y-8">
+          {/* PROGRESS */}
+
+          <div className="bg-white rounded-xl shadow p-6">
+            <div className="flex justify-between mb-3">
+              <div className="font-semibold text-[#001F3F]">
+                Physical Progress
+              </div>
+
+              <div className="font-semibold text-[#0074D9]">
+                {project.progress}%
+              </div>
+            </div>
+
+            <div className="w-full bg-gray-200 h-3 rounded">
+              <div
+                className="bg-[#0074D9] h-3 rounded"
+                style={{
+                  width: `${project.progress}%`,
+                }}
+              />
+            </div>
+          </div>
+
+          {/* BUDGET */}
+
+          <div className="grid grid-cols-3 gap-6">
+            <BudgetCard title="Total Budget" value={project.total_budget} />
+
+            <BudgetCard title="Funds Released" value={project.funds_released} />
+
+            <BudgetCard title="Funds Used" value={project.funds_used} />
+          </div>
+
+          {/* DESCRIPTION */}
+
+          <div className="bg-white rounded-xl shadow p-6">
+            <div className="font-semibold text-[#001F3F] mb-2">
+              Project Description
+            </div>
+
+            <div className="text-gray-700">{project.project_description}</div>
+          </div>
+
+          {/* MAP */}
+
+          <div className="bg-white rounded-xl shadow p-6">
+            <div className="font-semibold text-[#001F3F] mb-4">
+              Project Location
+            </div>
+
+            <iframe
+              className="w-full h-80 rounded"
+              src={`https://maps.google.com/maps?q=${project.latitude},${project.longitude}&z=15&output=embed`}
+            />
+          </div>
+        </div>
       </div>
+    </div>
+  );
+}
 
-      {/* Progress */}
+function Section({ title, children }) {
+  return (
+    <div>
+      <div className="font-semibold text-[#001F3F] mb-3">{title}</div>
 
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h2 className="text-xl font-semibold mb-4">Progress</h2>
+      <div className="space-y-3">{children}</div>
+    </div>
+  );
+}
 
-        <p>Completion: {project.progress}%</p>
+function Info({ label, value }) {
+  return (
+    <div className="flex justify-between text-sm">
+      <div className="text-gray-500">{label}</div>
 
-        <p>Current Stage: {project.current_stage}</p>
+      <div className="font-medium text-[#001F3F] text-right">{value}</div>
+    </div>
+  );
+}
 
-        <p>Status: {project.status}</p>
-      </div>
+function BudgetCard({ title, value }) {
+  return (
+    <div className="bg-white shadow rounded-xl p-6">
+      <div className="text-sm text-gray-500">{title}</div>
 
-      {/* Description */}
-
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h2 className="text-xl font-semibold mb-4">Description</h2>
-
-        <p>{project.project_description}</p>
-      </div>
-
-      {/* Map */}
-
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h2 className="text-xl font-semibold mb-4">Location Coordinates</h2>
-
-        <p>Latitude: {project.latitude}</p>
-
-        <p>Longitude: {project.longitude}</p>
-      </div>
+      <div className="text-xl font-semibold text-[#001F3F] mt-1">₹{value}</div>
     </div>
   );
 }

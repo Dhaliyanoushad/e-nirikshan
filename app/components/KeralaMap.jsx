@@ -1,207 +1,209 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  ZoomControl,
+} from "react-leaflet";
+
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import Link from "next/link";
 import L from "leaflet";
 
+/* ---------- CUSTOM ICON FUNCTION ---------- */
 
-// Fix marker icon issue in Next.js
+function createIcon(color) {
+  return new L.DivIcon({
+    className: "",
 
-delete L.Icon.Default.prototype._getIconUrl;
+    html: `
 
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+      <div style="
 
-  iconUrl:
-    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+        width:18px;
+        height:18px;
+        border-radius:50%;
 
-  shadowUrl:
-    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
-});
+        background:${color};
 
+        border:3px solid white;
 
+        box-shadow:
+        0 0 0 4px ${color}30,
+        0 0 12px ${color};
+
+      "></div>
+
+    `,
+  });
+}
+
+/* ---------- STATUS COLOR ---------- */
+
+function getColor(status) {
+  if (!status) return "#3b82f6";
+
+  status = status.toLowerCase();
+
+  if (status === "completed") return "#22c55e";
+
+  if (status === "ongoing") return "#f59e0b";
+
+  if (status === "delayed") return "#ef4444";
+
+  if (status === "risk") return "#f59e0b";
+
+  return "#3b82f6";
+}
 
 export default function KeralaMap() {
-
   const [projects, setProjects] = useState([]);
 
-
   useEffect(() => {
-
     fetchProjects();
-
   }, []);
 
-
-
   async function fetchProjects() {
+    const { data } = await supabase
 
-    const { data, error } = await supabase
       .from("projects")
+
       .select("*");
 
-    if (!error) setProjects(data);
-
+    setProjects(data || []);
   }
 
-
-
   return (
+    <div className="bg-[#F5F9FC] min-h-screen pt-28 px-8">
+      {/* HEADER */}
 
-    <div style={{ position: "relative" }}>
+      <div className="max-w-7xl mx-auto mb-6 flex justify-between items-center">
+        <div>
+          <div className="text-[#4B8BBE] text-sm">
+            Infrastructure Intelligence
+          </div>
 
+          <div className="text-3xl font-bold text-[#001F3F]">
+            Kerala Live Project Map
+          </div>
+        </div>
 
-      {/* LEGEND BOX */}
+        {/* LEGEND */}
 
+        <div
+          className="
 
-      <div
-        style={{
+          bg-[#001F3F]
+          text-white
+          px-5
+          py-4
+          rounded-xl
+          shadow-xl
+          border border-[#4B8BBE]/40
 
-          position: "absolute",
+        "
+        >
+          <div className="font-semibold mb-2">Status</div>
 
-          top: 20,
+          <LegendItem color="#22c55e" text="Completed" />
 
-          right: 20,
+          <LegendItem color="#f59e0b" text="Ongoing" />
 
-          zIndex: 1000,
-
-          backgroundColor: "rgba(30, 41, 59, 0.85)",
-
-          color: "white",
-
-          padding: "12px 18px",
-
-          borderRadius: "10px",
-
-          border: "2px solid white",
-
-          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-
-          fontSize: "14px",
-
-          lineHeight: "1.8",
-
-        }}
-      >
-
-        <b>Project Status</b>
-
-        <div>🟢 Completed</div>
-
-        <div>🟡 Ongoing</div>
-
-        <div>🔴 Delayed</div>
-
+          <LegendItem color="#ef4444" text="Delayed" />
+        </div>
       </div>
 
+      {/* MAP CARD */}
 
+      <div
+        className="
 
-      {/* MAP */}
+        max-w-7xl
+        mx-auto
 
+        rounded-2xl
+        overflow-hidden
 
+        shadow-2xl
 
-      <MapContainer
+        border border-[#4B8BBE]/30
 
-        center={[10.8505, 76.2711]}
-
-        zoom={7}
-
-        style={{
-
-          height: "90vh",
-
-          width: "100%",
-
-          borderRadius: "12px",
-
-        }}
-
+      "
       >
+        <MapContainer
+          center={[10.8505, 76.2711]}
+          zoom={7}
+          zoomControl={false}
+          style={{
+            height: "75vh",
 
+            width: "100%",
+          }}
+        >
+          <ZoomControl position="bottomright" />
 
-        <TileLayer
+          {/* BEAUTIFUL TILE */}
 
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
 
-        />
+          {/* MARKERS */}
 
+          {projects.map((project) => (
+            <Marker
+              key={project.id}
+              position={[project.latitude, project.longitude]}
+              icon={createIcon(getColor(project.status))}
+            >
+              <Popup>
+                <div className="space-y-1">
+                  <div className="font-semibold text-[#001F3F]">
+                    {project.project_name}
+                  </div>
 
+                  <div className="text-sm text-gray-500">
+                    {project.location}
+                  </div>
 
-        {/* MARKERS */}
+                  <div
+                    className="text-sm font-semibold"
+                    style={{
+                      color: getColor(project.status),
+                    }}
+                  >
+                    {project.status}
+                  </div>
 
+                  <Link
+                    href={`/projects/${project.district}/${project.id}`}
+                    className="
 
-        {projects.map((project) => (
+                      text-[#0074D9]
+                      font-semibold
+                      text-sm
 
-          <Marker
-
-            key={project.id}
-
-            position={[project.latitude, project.longitude]}
-
-          >
-
-            <Popup>
-
-              <div style={{ width: "200px" }}>
-
-                <h3 style={{ margin: "0 0 5px 0" }}>
-
-                  {project.project_name}
-
-                </h3>
-
-                <p>
-
-                  Start Date: {project.startdate}
-
-                </p>
-
-                <p>
-
-                  Status:
-
-                  <b> {project.status}</b>
-
-                </p>
-
-
-                <Link
-
-                  href={`/projects/${project.id}`}
-
-                  style={{
-
-                    color: "#2563eb",
-
-                    fontWeight: "bold",
-
-                    textDecoration: "underline",
-
-                  }}
-
-                >
-
-                  More Info →
-
-                </Link>
-
-              </div>
-
-            </Popup>
-
-          </Marker>
-
-        ))}
-
-
-      </MapContainer>
-
-
+                    "
+                  >
+                    View Details →
+                  </Link>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </div>
     </div>
-
   );
+}
 
+function LegendItem({ color, text }) {
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <div className="w-3 h-3 rounded-full" style={{ background: color }} />
+
+      {text}
+    </div>
+  );
 }
