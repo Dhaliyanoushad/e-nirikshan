@@ -4,579 +4,374 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 
 export default function ContractorPage() {
+  const [projects, setProjects] = useState([]);
 
-const [projects, setProjects] = useState([]);
+  const [form, setForm] = useState({
+    project_name: "",
+    location: "",
+    start_date: "",
+    end_date: "",
+    project_summary: "",
+  });
 
-const [form, setForm] = useState({
+  const [pdfFile, setPdfFile] = useState(null);
 
-project_name:"",
-location:"",
-start_date:"",
-end_date:"",
-project_summary:""
+  const [photoFiles, setPhotoFiles] = useState({});
 
-});
+  useEffect(() => {
+    fetchProjects();
+  }, []);
 
-const [pdfFile, setPdfFile] = useState(null);
+  async function fetchProjects() {
+    const { data, error } = await supabase
 
+      .from("contractor_projects")
 
+      .select("*")
 
-useEffect(()=>{
+      .order("project_id", { ascending: false });
 
-fetchProjects();
+    if (!error) setProjects(data);
+  }
 
-},[]);
+  function handleChange(e) {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
+  }
 
+  //
+  // SELECT PDF
+  //
 
+  function handlePdfChange(e) {
+    setPdfFile(e.target.files[0]);
+  }
 
-async function fetchProjects(){
+  //
+  // CREATE PROJECT
+  //
 
-const {data,error} = await supabase
+  async function createProject(e) {
+    e.preventDefault();
 
-.from("contractor_projects")
+    try {
+      let pdfUrl = null;
 
-.select("*")
+      //
+      // Upload PDF
+      //
 
-.order("project_id");
+      if (pdfFile) {
+        const fileName = `${Date.now()}_${pdfFile.name}`;
 
-if(error) console.error(error);
+        await supabase.storage
 
-else setProjects(data);
+          .from("project-reports")
 
-}
+          .upload(fileName, pdfFile);
 
+        const { data } = supabase.storage
 
+          .from("project-reports")
 
-function handleChange(e){
+          .getPublicUrl(fileName);
 
-setForm({
+        pdfUrl = data.publicUrl;
+      }
 
-...form,
+      //
+      // Insert Project
+      //
 
-[e.target.name]:e.target.value
+      const { data: project, error } = await supabase
 
-});
+        .from("contractor_projects")
 
-}
+        .insert({
+          project_name: form.project_name,
+          location: form.location,
+          start_date: form.start_date,
+          end_date: form.end_date,
+          project_summary: form.project_summary,
+          contractor_report_pdf: pdfUrl,
+        })
 
+        .select()
 
+        .single();
 
-function handlePdfChange(e){
+      if (error) {
+        alert(error.message);
+        return;
+      }
 
-setPdfFile(e.target.files[0]);
+      //
+      // Call Gemini Engine
+      //
 
-}
+      if (pdfFile) {
+        const formData = new FormData();
 
+        formData.append("project_id", project.project_id);
 
+        formData.append("pdf", pdfFile);
 
-//
-// CREATE PROJECT
-//
+        formData.append("pdf_url", pdfUrl);
 
-async function createProject(e){
+        formData.append("start_date", form.start_date);
 
-e.preventDefault();
+        formData.append("end_date", form.end_date);
 
-try{
+        await fetch("/api/create-project", {
+          method: "POST",
+          body: formData,
+        });
+      }
 
-let storagePath=null;
+      alert("Project Created with AI Analysis");
 
+      setPdfFile(null);
 
+      fetchProjects();
+    } catch (err) {
+      alert("Error");
+    }
+  }
 
-//
-// 1 Upload PDF to storage
-//
+  //
+  // SELECT PHOTO
+  //
 
-if(pdfFile){
+  function handlePhotoSelect(e, projectId) {
+    setPhotoFiles({
+      ...photoFiles,
+      [projectId]: e.target.files[0],
+    });
+  }
 
-const fileName = `${Date.now()}_${pdfFile.name}`;
+  //
+  // UPLOAD PHOTO BUTTON
+  //
 
-const {error:uploadError} = await supabase.storage
+  async function uploadPhoto(projectId) {
+    const file = photoFiles[projectId];
 
-.from("project-reports")
+    if (!file) {
+      alert("Select photo first");
+      return;
+    }
 
-.upload(fileName,pdfFile);
+    const fileName = `${Date.now()}_${file.name}`;
 
-if(uploadError){
+    await supabase.storage
 
-alert(uploadError.message);
+      .from("project-photos")
 
-return;
+      .upload(fileName, file);
 
-}
+    const { data } = supabase.storage
 
-storagePath=fileName;
+      .from("project-photos")
 
-}
+      .getPublicUrl(fileName);
 
+    const photoUrl = data.publicUrl;
 
+    //
+    // Update DB
+    //
 
-//
-// 2 Insert project
-//
+    await supabase
 
-const {data, error} = await supabase
+      .from("contractor_projects")
 
-.from("contractor_projects")
+      .update({
+        latest_photo: {
+          url: photoUrl,
+          date: new Date(),
+        },
+      })
 
-.insert({
+      .eq("project_id", projectId);
 
-project_name:form.project_name,
+    //
+    // Call Gemini
+    //
 
-location:form.location,
+    const formData = new FormData();
 
-start_date:form.start_date,
+    formData.append("project_id", projectId);
 
-end_date:form.end_date,
+    formData.append("image", file);
 
-project_summary:form.project_summary,
+    formData.append("image_url", photoUrl);
 
-contractor_report_pdf:storagePath
+    await fetch("/api/update-project", {
+      method: "POST",
+      body: formData,
+    });
 
-})
+    alert("Photo Uploaded & AI Updated");
 
-.select()
+    fetchProjects();
+  }
 
-.single();
+  return (
+    <div className="min-h-screen bg-[#F5F9FC] p-10">
+      <h1 className="text-3xl font-bold text-[#001F3F] mb-8">
+        Contractor Intelligence Dashboard
+      </h1>
 
+      {/* CREATE PROJECT */}
 
-if(error){
+      <div className="bg-white p-6 rounded-xl shadow mb-10">
+        <h2 className="text-xl font-semibold mb-4">Create New Project</h2>
 
-alert("Insert failed");
+        <form onSubmit={createProject} className="space-y-4">
+          <input
+            name="project_name"
+            placeholder="Project Name"
+            className="border p-3 w-full rounded"
+            onChange={handleChange}
+            required
+          />
 
-return;
+          <input
+            name="location"
+            placeholder="Location"
+            className="border p-3 w-full rounded"
+            onChange={handleChange}
+            required
+          />
 
-}
+          <input
+            type="date"
+            name="start_date"
+            className="border p-3 w-full rounded"
+            onChange={handleChange}
+            required
+          />
 
+          <input
+            type="date"
+            name="end_date"
+            className="border p-3 w-full rounded"
+            onChange={handleChange}
+            required
+          />
 
+          <textarea
+            name="project_summary"
+            placeholder="Summary"
+            className="border p-3 w-full rounded"
+            onChange={handleChange}
+          />
 
-//
-// 3 Send PDF to AI engine
-//
+          {/* PDF */}
 
-if(pdfFile){
-
-const formData = new FormData();
-
-formData.append("project_id",data.project_id);
-
-formData.append("pdf",pdfFile);
-
-formData.append("start_date",form.start_date);
-
-formData.append("end_date",form.end_date);
-
-formData.append("budget","unknown");
-
-await fetch("/api/create-project",{
-
-method:"POST",
-
-body:formData
-
-});
-
-}
-
-
-
-alert("Project created with AI timeline");
-
-
-
-setForm({
-
-project_name:"",
-
-location:"",
-
-start_date:"",
-
-end_date:"",
-
-project_summary:""
-
-});
-
-
-setPdfFile(null);
-
-fetchProjects();
-
-}
-catch(err){
-
-console.error(err);
-
-alert("Unexpected error");
-
-}
-
-}
-
-
-
-//
-// PHOTO UPLOAD
-//
-
-async function uploadPhoto(e, projectId, location) {
-
-try {
-
-const file = e.target.files[0];
-
-if (!file) {
-
-alert("No file selected");
-
-return;
-
-}
-
-
-const fileName = `${Date.now()}_${file.name}`;
-
-
-//
-// Upload to Supabase storage
-//
-
-const { error: uploadError } = await supabase.storage
-
-.from("project-photos")
-
-.upload(fileName, file);
-
-
-if (uploadError) {
-
-console.error(uploadError);
-
-alert("Storage upload failed");
-
-return;
-
-}
-
-
-
-//
-// Save reference in DB
-//
-
-const { error: dbError } = await supabase
-
-.from("contractor_projects")
-
-.update({
-
-latest_photo: {
-
-storage_path: fileName,
-
-date: new Date()
-
-}
-
-})
-
-.eq("project_id", projectId);
-
-
-if (dbError) {
-
-console.error(dbError);
-
-alert("Database update failed");
-
-return;
-
-}
-
-
-
-//
-// Send actual image to AI engine
-//
-
-const formData = new FormData();
-
-formData.append("project_id", projectId);
-
-formData.append("image", file);
-
-formData.append("location", location);
-
-
-const response = await fetch("/api/update-project", {
-
-method: "POST",
-
-body: formData
-
-});
-
-
-const result = await response.json();
-
-
-if (!result.success) {
-
-alert("AI analysis failed");
-
-return;
-
-}
-
-
-alert("Photo uploaded & analyzed successfully");
-
-
-fetchProjects();
-
-}
-
-catch (error) {
-
-console.error("Upload error:", error);
-
-alert("Unexpected error occurred");
-
-}
-
-}
-
-
-
-return(
-
-<div className="p-10 bg-gray-100 min-h-screen">
-
-
-<h1 className="text-3xl font-bold mb-10">
-
-Contractor Dashboard
-
-</h1>
-
-
-
-{/* CREATE PROJECT */}
-
-
-<div className="bg-white p-6 rounded shadow mb-10">
-
-
-<h2 className="text-xl font-semibold mb-4">
-
-New Project
-
-</h2>
-
-
-
-<form onSubmit={createProject} className="space-y-4">
-
-
-<input
-
-name="project_name"
-
-placeholder="Project Name"
-
-className="border p-3 w-full"
-
-onChange={handleChange}
-
-required
-
-/>
-
-
-<input
-
-name="location"
-
-placeholder="Location"
-
-className="border p-3 w-full"
-
-onChange={handleChange}
-
-required
-
-/>
-
-
-<input
-
-type="date"
-
-name="start_date"
-
-className="border p-3 w-full"
-
-onChange={handleChange}
-
-required
-
-/>
-
-
-<input
-
-type="date"
-
-name="end_date"
-
-className="border p-3 w-full"
-
-onChange={handleChange}
-
-required
-
-/>
-
-
-<textarea
-
-name="project_summary"
-
-placeholder="Summary"
-
-className="border p-3 w-full"
-
-onChange={handleChange}
-
-/>
-
-
-<input
-
-type="file"
-
-accept="application/pdf"
-
-onChange={handlePdfChange}
-
-/>
-
-
-<button className="bg-blue-600 text-white px-6 py-3 rounded">
-
-Create Project
-
-</button>
-
-
-</form>
-
-
-</div>
-
-
-
-{/* EXISTING PROJECTS */}
-
-
-<div className="bg-white p-6 rounded shadow">
-
-
-<h2 className="text-xl font-semibold mb-4">
-
-Existing Projects
-
-</h2>
-
-
-
-{projects.map(project=>(
-
-<div key={project.project_id}
-
-className="border p-4 mb-4 rounded">
-
-
-<h3 className="font-bold">
-
-{project.project_name}
-
-</h3>
-
-
-<p>
-
-{project.location}
-
-</p>
-
-
-{project.contractor_report_pdf &&(
-
-<p className="text-gray-500">
-
-PDF stored in system
-
-</p>
-
-)}
-
-
-
-<input
-
-type="file"
-
-accept="image/*"
-
-onChange={(e)=>
-
-uploadPhoto(
-
-e,
-
-project.project_id,
-
-project.location
-
-)
-
-}
-
-/>
-
-
-
-{project.latest_photo?.url &&(
-
-<a
-
-href={project.latest_photo.url}
-
-target="_blank"
-
-className="text-green-600 block"
-
->
-
-View Latest Photo
-
-</a>
-
-)}
-
-
-</div>
-
-))}
-
-
-</div>
-
-
-</div>
-
-);
-
+          <div>
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={handlePdfChange}
+            />
+
+            {pdfFile && (
+              <p className="text-green-600 text-sm mt-1">PDF Selected ✓</p>
+            )}
+          </div>
+
+          <button className="bg-[#0A4D92] text-white px-6 py-3 rounded hover:bg-[#08386b]">
+            Create Project
+          </button>
+        </form>
+      </div>
+
+      {/* EXISTING PROJECTS */}
+
+      <div className="space-y-6">
+        <h2 className="text-xl font-semibold">Existing Projects</h2>
+
+        {projects.map((project) => (
+          <div
+            key={project.project_id}
+            className="bg-white p-6 rounded-xl shadow"
+          >
+            <h3 className="font-bold text-lg text-[#001F3F]">
+              {project.project_name}
+            </h3>
+
+            <p className="text-gray-500">{project.location}</p>
+
+            {/* PDF Preview */}
+
+            {project.contractor_report_pdf && (
+              <a
+                href={project.contractor_report_pdf}
+                target="_blank"
+                className="text-blue-600 text-sm block mt-2"
+              >
+                View Report PDF
+              </a>
+            )}
+
+            {/* IMAGE PREVIEW */}
+
+            {project.latest_photo?.url && (
+              <img
+                src={project.latest_photo.url}
+                className="mt-3 w-48 rounded border"
+              />
+            )}
+
+            {/* PHOTO SELECT */}
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => handlePhotoSelect(e, project.project_id)}
+              className="mt-3"
+            />
+
+            {/* UPLOAD BUTTON */}
+
+            <button
+              onClick={() => uploadPhoto(project.project_id)}
+              className="block mt-2 bg-green-600 text-white px-4 py-2 rounded"
+            >
+              Upload Photo
+            </button>
+
+            {/* Gemini Suggestions */}
+
+            {project.gemini_suggestions && (
+              <div className="mt-4 bg-blue-50 p-3 rounded">
+                <p className="font-semibold text-blue-800">AI Suggestions</p>
+
+                <p className="text-sm text-blue-700">
+                  {project.gemini_suggestions.summary}
+                </p>
+              </div>
+            )}
+
+            {/* Timeline */}
+
+            {project.contractor_report_timeline && (
+              <div className="mt-4">
+                <p className="font-semibold">Timeline</p>
+
+                {project.contractor_report_timeline.map((t, i) => (
+                  <div key={i} className="text-sm text-gray-700">
+                    {t.start}-{t.end} Month → {t.phase}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
