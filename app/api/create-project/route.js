@@ -1,36 +1,29 @@
-import { supabase } from "../../../lib/supabase";
-import { extractPdfText } from "../../../lib/pdfExtractor";
-import { generateTimeline } from "../../../lib/gemini";
+import { verifyAuth } from "../../../lib/auth";
+import { handleApiError, validateFields } from "../../../lib/errorHandler";
 
 export const runtime = "nodejs";
 
 export async function POST(req) {
+  try {
+    // =============================
+    // 0. Authentication Check
+    // =============================
+    const { user, error: authError } = await verifyAuth(req);
+    if (authError) {
+      return Response.json({ success: false, error: authError }, { status: 401 });
+    }
 
-try {
+    // =============================
+    // 1. Read form data
+    // =============================
+    const formData = await req.formData();
+    validateFields(formData, ["project_id", "pdf", "start_date", "end_date"]);
 
-// =============================
-// 1. Read form data
-// =============================
-
-const formData = await req.formData();
-
-const projectId = formData.get("project_id");
-const pdfFile = formData.get("pdf");
-const start = formData.get("start_date");
-const end = formData.get("end_date");
-const budget = formData.get("budget") || "unknown";
-
-
-if (!projectId || !pdfFile || !start || !end) {
-
-return Response.json({
-
-success: false,
-error: "Missing required fields"
-
-}, { status: 400 });
-
-}
+    const projectId = formData.get("project_id");
+    const pdfFile = formData.get("pdf");
+    const start = formData.get("start_date");
+    const end = formData.get("end_date");
+    const budget = formData.get("budget") || "unknown";
 
 
 // =============================
@@ -155,17 +148,7 @@ suggestion: aiResult.suggestion
 
 }
 
-catch (error) {
-
-console.error("Create project error:", error);
-
-return Response.json({
-
-success: false,
-error: error.message
-
-}, { status: 500 });
-
-}
-
+  catch (error) {
+    return handleApiError(error, "Create project error");
+  }
 }

@@ -1,32 +1,27 @@
-import { supabase } from "../../../lib/supabase";
-import { verifyProgress } from "../../../lib/gemini";
-import { getExpectedProgress } from "../../../lib/progressTimeline";
-import { getNews } from "../../../lib/news";
 import { getWeather } from "../../../lib/weather";
+import { verifyAuth } from "../../../lib/auth";
+import { handleApiError, validateFields } from "../../../lib/errorHandler";
 
 export const runtime = "nodejs";
 
 export async function POST(req){
+  try {
+    // =====================================
+    // 0. Authentication Check
+    // =====================================
+    const { user, error: authError } = await verifyAuth(req);
+    if (authError) {
+      return Response.json({ success: false, error: authError }, { status: 401 });
+    }
 
-try{
+    // =====================================
+    // 1. Read form data
+    // =====================================
+    const formData = await req.formData();
+    validateFields(formData, ["project_id", "image"]);
 
-// =====================================
-// 1. Read form data
-// =====================================
-
-const formData = await req.formData();
-
-const projectId = Number(formData.get("project_id"));
-const image = formData.get("image");
-
-if(!projectId || !image){
-
-return Response.json({
-success:false,
-error:"Missing project_id or image"
-},{status:400});
-
-}
+    const projectId = Number(formData.get("project_id"));
+    const image = formData.get("image");
 
 
 // =====================================
@@ -255,20 +250,7 @@ news
 
 
 }
-catch(error){
-
-console.log("SERVER ERROR:");
-
-console.log(error);
-
-return Response.json({
-
-success:false,
-
-error:error.message
-
-},{status:500});
-
-}
-
+  catch (error) {
+    return handleApiError(error, "Update project error");
+  }
 }
