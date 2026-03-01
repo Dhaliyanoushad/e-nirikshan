@@ -248,6 +248,19 @@ export default function CivilianDashboard() {
                       </tr>
                       <tr className="border-b border-slate-50">
                         <td className="p-4 font-black text-[10px] text-slate-400 uppercase bg-slate-50/50">
+                          Workforce Strength
+                        </td>
+
+                        <td className="p-4 font-black text-blue-700 text-lg">
+                          {selected.employee_count || 0}
+
+                          <span className="text-xs text-slate-400 ml-2 font-semibold">
+                            personnel deployed
+                          </span>
+                        </td>
+                      </tr>
+                      <tr className="border-b border-slate-50">
+                        <td className="p-4 font-black text-[10px] text-slate-400 uppercase bg-slate-50/50">
                           Planned Scope
                         </td>
                         <td className="p-4 text-rose-600 font-black text-lg italic">

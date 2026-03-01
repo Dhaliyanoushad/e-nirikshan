@@ -28,6 +28,7 @@ export default function ContractorPage() {
     start_date: "",
     end_date: "",
     project_summary: "",
+    employee_count: "", // ADD THIS
   });
 
   const [pdfFile, setPdfFile] = useState(null);
@@ -87,6 +88,7 @@ export default function ContractorPage() {
           start_date: form.start_date,
           end_date: form.end_date,
           project_summary: form.project_summary,
+          employee_count: parseInt(form.employee_count) || 0,
           contractor_report_pdf: pdfUrl,
         })
         .select()
@@ -421,6 +423,68 @@ export default function ContractorPage() {
                     {selectedProject.project_summary ||
                       "No summary provided for this project."}
                   </p>
+                  {/* EMPLOYEE COUNT SECTION */}
+
+                  <div className="mt-4">
+                    {/* Display */}
+
+                    <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg mb-3">
+                      <p className="text-xs text-blue-600 font-bold uppercase tracking-wide">
+                        Employees On Site
+                      </p>
+
+                      <p className="text-xl font-bold text-blue-900">
+                        {selectedProject.employee_count || 0}
+                      </p>
+                    </div>
+
+                    {/* Button */}
+
+                    <button
+                      onClick={async () => {
+                        const count = prompt(
+                          "Enter number of employees on site:",
+                        );
+
+                        if (!count) return;
+
+                        const { error } = await supabase
+
+                          .from("contractor_projects")
+
+                          .update({
+                            employee_count: parseInt(count),
+                          })
+
+                          .eq("project_id", selectedProject.project_id);
+
+                        if (error) {
+                          alert("Failed to update employee count");
+
+                          return;
+                        }
+
+                        alert("Employee count updated successfully");
+
+                        fetchProjects();
+
+                        const updated = await supabase
+
+                          .from("contractor_projects")
+
+                          .select("*")
+
+                          .eq("project_id", selectedProject.project_id)
+
+                          .single();
+
+                        setSelectedProject(updated.data);
+                      }}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl text-sm transition shadow-sm"
+                    >
+                      Update Employee Count
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -515,6 +579,20 @@ export default function ContractorPage() {
                   rows={3}
                   className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                   onChange={handleChange}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500 uppercase">
+                  Employee Count
+                </label>
+
+                <input
+                  type="number"
+                  name="employee_count"
+                  placeholder="Enter number of workers on site"
+                  className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  onChange={handleChange}
+                  min="0"
                 />
               </div>
 

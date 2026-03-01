@@ -119,7 +119,7 @@ leading-tight
           {/* WORKING BUTTON */}
 
           <button
-            onClick={() => router.push("/projects")}
+            onClick={() => router.push("/updates")}
             className="
 
 bg-[#0A4D92]
